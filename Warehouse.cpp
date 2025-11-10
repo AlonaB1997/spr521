@@ -10,13 +10,13 @@ const int DATE_OF_EXPIRY_SIZE = 10;
 
 struct Product // Product object structure
 {
-	int id;
 	char name[NAME_SIZE];
 	char manufacturer[MANUFACTURER_SIZE];
 	char category[CATEGORY_SIZE];
 	char dateOfReceipt[DATE_OF_RECEIPT_SIZE];
 	char dateOfExpiry[DATE_OF_EXPIRY_SIZE];
 	float price;
+	size_t id;
 
 };
 
@@ -55,17 +55,8 @@ size_t countExistingProducts(Product* warehouse, size_t capacity) // Counting ex
 }
 
 
-void fillProduct(Product& product) // Filling product with user input data. Checking for positive product ID
+void fillProduct(Product& product) // Filling product with user input data. Id is populated automatically through function addProduct()
 {
-	cout << "Enter product ID (positive value): ";
-	do {
-		cin >> product.id;
-		if (product.id <= 0)
-		{
-			cout << "Product ID cannot be zero or less than zero. Please enter again: ";
-		}
-	}
-	while (product.id <= 0);
 	cout << "Enter product name: ";
 	cin >> product.name;
 	cout << "Enter manufacturer: ";
@@ -79,6 +70,14 @@ void fillProduct(Product& product) // Filling product with user input data. Chec
 	cout << "Enter price: ";
 	cin >> product.price;
 
+}
+
+void fillProductId(Product* warehouse, size_t count)
+{
+	for (size_t i = 0; i < count; i++)
+	{
+		warehouse[i].id = i + 1;
+	}
 }
 
 void showProduct(const Product& product) // Displaying product information
@@ -102,60 +101,112 @@ void showWarehouse(Product* warehouse, size_t count) // Displaying all products 
 }
 
 Product* addProduct(Product* warehouse, size_t& capacity, size_t& count, size_t productsToAdd) // Adding products to the warehouse. If there is not enough capacity, 
-																							   // then creating a new warehouse with adding products from old warehouse and adding new products
+// then creating a new warehouse with adding products from old warehouse and adding new products
 {
-	if (count + productsToAdd <= capacity)
+	if (warehouse != nullptr)
 	{
-		for (size_t i = 0; i < productsToAdd; i++)
+		if (count + productsToAdd <= capacity)
 		{
-			fillProduct(warehouse[count + i]);
+			for (size_t i = 0; i < productsToAdd; i++)
+			{
+				fillProduct(warehouse[count + i]);
+			}
+
+			count += productsToAdd;
+
+			fillProductId(warehouse, count);
 		}
-		count += productsToAdd;
+		else
+		{
+			size_t newCapacity = count + productsToAdd;
+			Product* newWarehouse = new Product[newCapacity];
+
+			for (size_t i = 0; i < newCapacity; i++)
+			{
+				if (i < count)
+				{
+					newWarehouse[i] = warehouse[i];
+				}
+				else
+				{
+					fillProduct(newWarehouse[i]);
+				}
+
+			}
+
+			delete[] warehouse;
+			warehouse = newWarehouse;
+			capacity = newCapacity;
+			count += productsToAdd;
+
+			fillProductId(warehouse, count);
+		}
 	}
+
 	else
 	{
-		size_t newCapacity = count + productsToAdd;
-		Product* newWarehouse = new Product[newCapacity];
-
-		for (size_t i = 0; i < count; i++)
-		{
-			newWarehouse[i] = warehouse[i];
-		}
-
-		delete[] warehouse;
-		warehouse = newWarehouse;
-		capacity = newCapacity;
-
-		for (size_t i = 0; i < productsToAdd; i++)
-		{
-			fillProduct(warehouse[count + i]);
-		}
-		count += productsToAdd;
+		cout << "Warehouse doesn't exist!";
 	}
 
 	return warehouse;
 }
 
 
+Product* removeProduct(Product* warehouse, size_t& capacity, size_t& count, int idToRemove)
+{
+	size_t newCapacity = --count;
+	Product* newWarehouse = new Product[newCapacity];
 
+	for (size_t i = 0, j = 0; j < newCapacity; i++)
+	{
+		if (warehouse[i].id != idToRemove)
+		{
+			newWarehouse[j++] = warehouse[i];
+
+		}
+
+	}
+
+	delete[] warehouse;
+	warehouse = newWarehouse;
+	capacity = newCapacity;
+
+	return warehouse;
+}
+
+bool checkProductId(Product* warehouse, size_t capacity, int idToRemove)
+{
+	bool found = false;
+
+	for (size_t i = 0; i < capacity; i++)
+	{
+		if (warehouse[i].id == idToRemove)
+		{
+			found = true;
+		}
+	}
+
+	return found;
+}
 
 
 int main()
 {
-	int choice; 
-	size_t capacity, count, productsToAdd;	
+	int choice, idToRemove;
+	bool foundIdToRemove;
+	size_t capacity, count, productsToAdd;
 	cout << "Enter warehouse capacity: ";
 	cin >> capacity;
 
 	Product* warehouse = new Product[capacity]; // Creating warehouse with given capacity
 
 	fillWarehouseEmpty(warehouse, capacity); // Filling warehouse with empty products
-	
+
 	count = countExistingProducts(warehouse, capacity); // Counting existing products in the warehouse for future checks
 
-	
+
 	do
-	{	
+	{
 		cout << "Choose operation (1 - Add product, 2 - Remove product, 3 - Change product, 4 - Search product, 5 - Sort products, 0 - Exit): ";
 		cin >> choice;
 		switch (choice)
@@ -163,13 +214,38 @@ int main()
 		case 1:
 			cout << "Enter number of products to add: ";
 			cin >> productsToAdd;
+
 			warehouse = addProduct(warehouse, capacity, count, productsToAdd);
+
+			cout << "Products have been successfully added to the warehouse!" << endl;
 			cout << "Products in the warehouse after addition: " << endl;
 			showWarehouse(warehouse, count);
+			break;
+
+		case 2:
+			do {
+				cout << "Enter ID of product to remove: ";
+				cin >> idToRemove;
+				foundIdToRemove = checkProductId(warehouse, capacity, idToRemove);
+
+				if (foundIdToRemove)
+				{
+					warehouse = removeProduct(warehouse, capacity, count, idToRemove);
+					cout << "Products have been successfully removed from the warehouse!" << endl;
+					cout << "Products in the warehouse after removal: " << endl;
+					showWarehouse(warehouse, count);
+				}
+				else
+				{
+					cout << "Product ID to remove has not been found. Please try again." << endl;
+				}
+
+			} while (!foundIdToRemove);
+
+
 		}
 
-	}
-	while (choice != 0);
+	} while (choice != 0);
 
 
 
