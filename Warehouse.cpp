@@ -33,6 +33,7 @@ int main()
 
 				cout << "\nEnter number of products to add: ";
 				cin >> productsToAdd;
+				cin.ignore();
 
 				warehouse = addProduct(warehouse, capacity, count, productsToAdd);
 
@@ -76,6 +77,10 @@ int main()
 				do {
 					cout << "\nEnter ID product to change or 0 (to exit operation): ";
 					cin >> idToChange;
+					if (idToChange != 0) {
+						cin.ignore();
+					}
+
 					foundId = checkProductId(warehouse, capacity, idToChange);
 
 					if (foundId && idToChange != 0) {
@@ -104,7 +109,9 @@ int main()
 				do {
 					cout << "\nEnter criteria for search (1 - by name, 2 - by manufacturer, 3 - by price, 4 - by category, 5 - by date of receipt, 6 - by date of expiry, 0 - to exit operation): ";
 					cin >> searchChoice;
-					cin.ignore();
+					if (searchChoice != 3 && searchChoice != 0) {
+						cin.ignore();
+					}
 
 					if (searchChoice >= 1 && searchChoice <= 6) {
 						switch (searchChoice) {
@@ -208,14 +215,14 @@ int main()
 					if (sortChoice >= 1 && sortChoice <= 2) {
 						switch (sortChoice) {
 						case 1:
-							sortByPrice(warehouse, capacity);
+							sortByPrice(warehouse, count);
 							fillProductId(warehouse, count);
 							cout << "\nWarehouse after sort by price: " << endl;
 							showWarehouse(warehouse, count);
 							break;
 
 						case 2:
-							sortByCategory(warehouse, capacity);
+							sortByCategory(warehouse, count);
 							fillProductId(warehouse, count);
 							cout << "\nWarehouse after sort by category: " << endl;
 							showWarehouse(warehouse, count);
