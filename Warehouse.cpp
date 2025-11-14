@@ -269,5 +269,7 @@ int main()
 
 	} while (choice != 0);
 
+	delete[] warehouse;
+
 	return 0;
 }
